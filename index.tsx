@@ -558,7 +558,7 @@ const HomeView = ({ onNavigate }: { onNavigate: (id: string) => void }) => (
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-[#232a42] group-hover:scale-110 transition-transform">
             <i className="fas fa-globe text-2xl"></i>
           </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Formateador de Países</h3>
+          <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Listado de Países</h3>
           <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">Extrae y unifica códigos numéricos de países a formato de 3 cifras.</p>
           <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">
             Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i>
