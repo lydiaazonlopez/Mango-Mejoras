@@ -326,80 +326,99 @@ const CountryCodeFormatterView: React.FC = () => {
     setError(null);
     setResult('');
     
-    // 1. Limpieza inicial de líneas
-    const lines = inputText.split('\n').map(l => l.trim()).filter(l => l !== '');
+    // 1. Preprocesado inicial: Dividimos por líneas
+    const lines = inputText.split('\n');
 
-    if (lines.length === 0) {
+    if (lines.length === 0 || (lines.length === 1 && lines[0].trim() === '')) {
       setError("No hay datos pegados para procesar.");
       return;
     }
 
     try {
-      // 2. Obtener lista de exclusión manual
+      // 2. Obtener lista de exclusión manual normalizada
       const manualExcludes = excludeText.split(/,|\n/)
         .map(p => normalize(p))
         .filter(p => p !== '');
 
-      const codes: string[] = [];
-      let isExcludedByWeek = false; // Flag para exclusión automática por marcador de semanas
+      const finalResults: string[] = [];
+      const seenCodes = new Set<string>();
+      const seenNames = new Set<string>();
+      
       let i = 0;
 
       while (i < lines.length) {
-        const line = lines[i];
+        const rawLine = lines[i];
+        const trimmedLine = rawLine.trim();
 
-        // A. DETECCIÓN DE MARCADORES DE SEMANAS (Exclusión Automática)
-        // Patrón: Número (1, 2 o 3) seguido de una línea que contenga "SEMANA" y "TARDE"
-        const isPotentialWeekNumber = /^[123]$/.test(line);
-        if (isPotentialWeekNumber && lines[i + 1]) {
-          const nextLine = normalize(lines[i + 1]);
-          if (nextLine.includes("semana") && nextLine.includes("tarde")) {
-            isExcludedByWeek = true;
-            i += 2; // Saltar el bloque del marcador
+        // Ignoramos líneas vacías pero continuamos el procesamiento
+        if (trimmedLine === '') {
+          i++;
+          continue;
+        }
+
+        // DETECCIÓN DE BLOQUES DE SEMANAS (Noise)
+        // Patrón: Número 1, 2 o 3 seguido de una línea con "SEMANA"
+        if (/^[123]$/.test(trimmedLine) && lines[i + 1]) {
+          const nextLineNorm = normalize(lines[i + 1]);
+          if (nextLineNorm.includes("semana")) {
+            // Es un marcador de semanas. Lo saltamos completamente y seguimos con el resto.
+            i += 2;
             continue;
           }
         }
 
-        // B. DETECCIÓN DE BLOQUE DE PAÍS (Código -> Nombre(s) -> ok)
-        // Un bloque válido comienza siempre por una línea puramente numérica
-        if (/^\d+$/.test(line)) {
-          const countryCode = line;
+        // DETECCIÓN DE BLOQUE DE PAÍS (CÓDIGO NUMÉRICO 1-3 DÍGITOS)
+        if (/^\d{1,3}$/.test(trimmedLine)) {
+          const countryCode = trimmedLine;
           const nameParts: string[] = [];
           i++;
 
-          // Recopilamos todas las líneas de texto hasta encontrar el marcador de cierre "ok"
-          // Esto permite nombres de países que ocupan varias líneas (ej. "COREA \n DEL SUR")
+          // Recolectamos el nombre (multilínea) hasta encontrar "ok" o el final de los datos
           while (i < lines.length && normalize(lines[i]) !== "ok") {
-            nameParts.push(lines[i]);
+            const part = lines[i].trim();
+            if (part !== '') nameParts.push(part);
             i++;
           }
 
-          const countryName = nameParts.join(" ").trim();
-          
-          // Solo procesamos si no estamos bajo el efecto de un marcador de semanas
-          if (!isExcludedByWeek) {
-            // Aplicamos exclusión manual del textarea
-            if (countryName && !manualExcludes.includes(normalize(countryName))) {
-              // Formateo obligatorio a 3 cifras
-              codes.push(countryCode.padStart(3, '0'));
+          const rawName = nameParts.join(" ").trim().replace(/\s+/g, ' ');
+          const normName = normalize(rawName);
+
+          // Procesamos el país independientemente de si hubo bloques de semanas antes
+          if (rawName) {
+            const isManuallyExcluded = manualExcludes.includes(normName);
+            
+            if (!isManuallyExcluded) {
+              // Deduplicación por Código y por Nombre (Case Insensitive)
+              if (!seenCodes.has(countryCode) && !seenNames.has(normName)) {
+                seenCodes.add(countryCode);
+                seenNames.add(normName);
+                
+                // Formateo final obligatorio a 3 cifras (000)
+                finalResults.push(countryCode.padStart(3, '0'));
+              }
             }
           }
 
-          i++; // Saltamos la línea del "ok"
+          // Si encontramos "ok", lo saltamos para seguir con el siguiente bloque
+          if (i < lines.length && normalize(lines[i]) === "ok") {
+            i++;
+          }
           continue;
         }
 
-        i++; // Avanzamos si la línea no encaja con ningún patrón conocido
+        // Si la línea no encaja con ningún patrón conocido, simplemente avanzamos
+        i++;
       }
 
-      if (codes.length === 0) {
-        setError("No se detectaron códigos válidos o todo fue excluido.");
+      if (finalResults.length === 0) {
+        setError("No se detectaron códigos válidos únicos o todos fueron excluidos.");
         return;
       }
 
-      // 3. Generar resultado unificado
-      setResult(codes.join(','));
+      // 3. GENERACIÓN DE RESULTADO FINAL (Codes separated by commas, no spaces)
+      setResult(finalResults.join(','));
     } catch (err) {
-      setError("Error procesando el listado. Revisa el formato de los datos.");
+      setError("Error crítico procesando el listado. Revisa la integridad de los bloques Código/País/ok.");
     }
   };
 
@@ -434,7 +453,7 @@ const CountryCodeFormatterView: React.FC = () => {
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={`Ejemplo:\n474\nARUBA\nok\n800\nAUSTRALIA\nok`}
+                placeholder={`Ejemplo:\n728\nCOREA\nDEL SUR\nok`}
                 className="w-full h-64 bg-[#f8fafc] border border-slate-200 rounded-[1.25rem] p-6 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none"
               />
             </div>
