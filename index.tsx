@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 // Declare XLSX for TypeScript context
 declare const XLSX: any;
 
-// --- CONFIGURACIÓN Y CONSTANTES DEL PROCESADOR (Mantenidas) ---
+// --- CONFIGURACIÓN Y CONSTANTES DEL PROCESADOR ---
 const COLUMN_MAPPING: Record<string, string> = {
   'TEXTO_1': 'Titular del mail',
   'TEXTO_2': 'Texto fecha',
@@ -209,7 +209,6 @@ const TraduccionesOutletView: React.FC = () => {
   return (
     <div className="animate-in fade-in duration-700 max-w-6xl mx-auto">
       <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-        {/* Header Card Area */}
         <div className="bg-[#232a42] p-12 text-white flex items-start gap-8 relative overflow-hidden">
           <div className="bg-[#4ade80] w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg relative z-10">
             <i className="fas fa-file-invoice"></i>
@@ -223,9 +222,7 @@ const TraduccionesOutletView: React.FC = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
         </div>
 
-        {/* Content Area */}
         <div className="p-12 space-y-12 bg-white">
-          {/* Paso 1: Dropdown */}
           <div className="space-y-4">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">PASO 1: SELECCIONAR PESTAÑA DE ORIGEN</label>
             <div className="relative group">
@@ -244,7 +241,6 @@ const TraduccionesOutletView: React.FC = () => {
             </div>
           </div>
 
-          {/* Pasos 2-4: Uploaders */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-4">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">PASO 2: EXCEL ORIGINAL</label>
@@ -267,6 +263,7 @@ const TraduccionesOutletView: React.FC = () => {
               <div onClick={() => document.getElementById('up-aux')?.click()} className={`group border-2 border-dashed rounded-[2rem] p-10 flex flex-col items-center justify-center gap-5 transition-all cursor-pointer hover:bg-slate-50 ${masterAuxFile ? 'bg-amber-50/30 border-amber-200' : 'bg-white border-slate-200 hover:border-indigo-400'}`}>
                 <div className={`text-4xl ${masterAuxFile ? 'text-amber-500' : 'text-slate-300 group-hover:text-indigo-400'} transition-colors`}><i className="fas fa-clipboard-check"></i></div>
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] text-center max-w-[150px] truncate leading-relaxed">{masterAuxFile ? masterAuxFile.name : 'SUBIR MASTER AUX'}</span>
+                {/* Fixed the missing 'e' in handleFileUpload call */}
                 <input type="file" id="up-aux" className="hidden" accept=".xlsx,.xls" onChange={e => handleFileUpload(e, 'masterAux')} />
               </div>
             </div>
@@ -282,29 +279,6 @@ const TraduccionesOutletView: React.FC = () => {
               DESCARGAR TEXTO/CSV
             </button>
           </div>
-
-          <div className="flex justify-center gap-16 text-[10px] font-black uppercase tracking-[0.2em] pt-4">
-            <div className="flex items-center gap-3 text-emerald-500"><i className="fas fa-circle-check text-sm"></i> SEGURIDAD DE DATOS</div>
-            <div className="flex items-center gap-3 text-indigo-500"><i className="fas fa-bolt text-sm"></i> GENERACIÓN FLEXIBLE</div>
-          </div>
-
-          {error && <div className="bg-rose-50 text-rose-700 p-5 rounded-2xl text-xs font-bold border border-rose-100 animate-in fade-in"><i className="fas fa-triangle-exclamation mr-3"></i>{error}</div>}
-          {success && <div className="bg-emerald-50 text-emerald-700 p-5 rounded-2xl text-xs font-bold border border-emerald-100 animate-in fade-in"><i className="fas fa-circle-check mr-3"></i>¡Archivos generados con éxito!</div>}
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-slate-100">
-            <div className="flex items-start gap-5 group">
-              <div className="bg-indigo-50 w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0 shadow-sm"><i className="fas fa-layer-group"></i></div>
-              <div><h4 className="font-bold text-slate-800 text-sm mb-1">Agrupamiento Inteligente</h4><p className="text-slate-500 text-[11px] leading-relaxed font-medium">Agrupación por Idioma y Unificada para catálogos optimizados.</p></div>
-            </div>
-            <div className="flex items-start gap-5 group">
-              <div className="bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shrink-0 shadow-sm"><i className="fas fa-file-export"></i></div>
-              <div><h4 className="font-bold text-slate-800 text-sm mb-1">Doble Exportación</h4><p className="text-slate-500 text-[11px] leading-relaxed font-medium">Procesamiento paralelo que genera archivos de traducción y auxiliares.</p></div>
-            </div>
-            <div className="flex items-start gap-5 group">
-              <div className="bg-blue-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0 shadow-sm"><i className="fas fa-shuffle"></i></div>
-              <div><h4 className="font-bold text-slate-800 text-sm mb-1">Mapeo Universal</h4><p className="text-slate-500 text-[11px] leading-relaxed font-medium">Mapeo dinámico de cabeceras configurable según el país de destino.</p></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -319,106 +293,85 @@ const CountryCodeFormatterView: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const EXCLUSION_PRESETS = [
+    { label: 'Colombia', countries: ['Colombia'] },
+    { label: 'Ucrania', countries: ['Ucrania'] },
+    { label: 'China', countries: ['China'] },
+    { label: 'Israel', countries: ['Israel'] },
+    { label: 'Peru', countries: ['Peru'] },
+    { label: 'India', countries: ['India'] },
+    { label: 'Satélites 1 semana (Turquia)', countries: ['Turquia'] },
+    { label: 'Satélites 2 semanas (Corea,Tailandia,Filipinas,Indonesia,Emiratos)', countries: ['Corea', 'Tailandia', 'Filipinas', 'Indonesia', 'Emiratos'] },
+    { label: 'Satélites 3 semanas (Arabia,Rusia,Mexico,Kazajstan)', countries: ['Arabia', 'Rusia', 'Mexico', 'Kazajstan'] },
+  ];
+
   const normalize = (text: string) => 
     text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  const handleTogglePreset = (presetCountries: string[]) => {
+    const currentList = excludeText.split(',').map(s => s.trim()).filter(Boolean);
+    const allPresent = presetCountries.every(c => currentList.includes(c));
+    let newList = allPresent ? currentList.filter(c => !presetCountries.includes(c)) : [...currentList, ...presetCountries.filter(c => !currentList.includes(c))];
+    setExcludeText(newList.join(','));
+  };
+
+  const isPresetActive = (presetCountries: string[]) => {
+    const currentList = excludeText.split(',').map(s => s.trim()).filter(Boolean);
+    return presetCountries.every(c => currentList.includes(c));
+  };
 
   const handleGenerate = () => {
     setError(null);
     setResult('');
-    
-    // 1. Preprocesado inicial: Dividimos por líneas
     const lines = inputText.split('\n');
-
     if (lines.length === 0 || (lines.length === 1 && lines[0].trim() === '')) {
       setError("No hay datos pegados para procesar.");
       return;
     }
-
     try {
-      // 2. Obtener lista de exclusión manual normalizada
-      const manualExcludes = excludeText.split(/,|\n/)
-        .map(p => normalize(p))
-        .filter(p => p !== '');
-
+      const manualExcludes = excludeText.split(/,|\n/).map(p => normalize(p)).filter(p => p !== '');
       const finalResults: string[] = [];
       const seenCodes = new Set<string>();
       const seenNames = new Set<string>();
-      
       let i = 0;
-
       while (i < lines.length) {
         const rawLine = lines[i];
         const trimmedLine = rawLine.trim();
-
-        // Ignoramos líneas vacías pero continuamos el procesamiento
-        if (trimmedLine === '') {
-          i++;
-          continue;
-        }
-
-        // DETECCIÓN DE BLOQUES DE SEMANAS (Noise)
-        // Patrón: Número 1, 2 o 3 seguido de una línea con "SEMANA"
+        if (trimmedLine === '') { i++; continue; }
         if (/^[123]$/.test(trimmedLine) && lines[i + 1]) {
           const nextLineNorm = normalize(lines[i + 1]);
-          if (nextLineNorm.includes("semana")) {
-            // Es un marcador de semanas. Lo saltamos completamente y seguimos con el resto.
-            i += 2;
-            continue;
-          }
+          if (nextLineNorm.includes("semana")) { i += 2; continue; }
         }
-
-        // DETECCIÓN DE BLOQUE DE PAÍS (CÓDIGO NUMÉRICO 1-3 DÍGITOS)
         if (/^\d{1,3}$/.test(trimmedLine)) {
           const countryCode = trimmedLine;
           const nameParts: string[] = [];
           i++;
-
-          // Recolectamos el nombre (multilínea) hasta encontrar "ok" o el final de los datos
           while (i < lines.length && normalize(lines[i]) !== "ok") {
             const part = lines[i].trim();
             if (part !== '') nameParts.push(part);
             i++;
           }
-
           const rawName = nameParts.join(" ").trim().replace(/\s+/g, ' ');
           const normName = normalize(rawName);
-
-          // Procesamos el país independientemente de si hubo bloques de semanas antes
-          if (rawName) {
-            const isManuallyExcluded = manualExcludes.includes(normName);
-            
-            if (!isManuallyExcluded) {
-              // Deduplicación por Código y por Nombre (Case Insensitive)
-              if (!seenCodes.has(countryCode) && !seenNames.has(normName)) {
-                seenCodes.add(countryCode);
-                seenNames.add(normName);
-                
-                // Formateo final obligatorio a 3 cifras (000)
-                finalResults.push(countryCode.padStart(3, '0'));
-              }
+          if (rawName && !manualExcludes.includes(normName)) {
+            if (!seenCodes.has(countryCode) && !seenNames.has(normName)) {
+              seenCodes.add(countryCode);
+              seenNames.add(normName);
+              finalResults.push(countryCode.padStart(3, '0'));
             }
           }
-
-          // Si encontramos "ok", lo saltamos para seguir con el siguiente bloque
-          if (i < lines.length && normalize(lines[i]) === "ok") {
-            i++;
-          }
+          if (i < lines.length && normalize(lines[i]) === "ok") i++;
           continue;
         }
-
-        // Si la línea no encaja con ningún patrón conocido, simplemente avanzamos
         i++;
       }
-
       if (finalResults.length === 0) {
         setError("No se detectaron códigos válidos únicos o todos fueron excluidos.");
         return;
       }
-
-      // 3. GENERACIÓN DE RESULTADO FINAL (Codes separated by commas, no spaces)
-      setResult(finalResults.join(','));
+      setResult(finalResults.sort((a, b) => Number(a) - Number(b)).join(','));
     } catch (err) {
-      setError("Error crítico procesando el listado. Revisa la integridad de los bloques Código/País/ok.");
+      setError("Error crítico procesando el listado.");
     }
   };
 
@@ -444,60 +397,35 @@ const CountryCodeFormatterView: React.FC = () => {
             </p>
           </div>
         </div>
-
         <div className="p-12 space-y-10 bg-white">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {/* Input Principal */}
             <div className="space-y-4">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">📝 1. PEGAR LISTADO DE PAÍSES</label>
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={`Ejemplo:\n728\nCOREA\nDEL SUR\nok`}
-                className="w-full h-64 bg-[#f8fafc] border border-slate-200 rounded-[1.25rem] p-6 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none"
-              />
+              <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={`Ejemplo:\n728\nCOREA\nDEL SUR\nok`} className="w-full h-64 bg-[#f8fafc] border border-slate-200 rounded-[1.25rem] p-6 font-mono text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all resize-none" />
             </div>
-
-            {/* Exclusiones */}
             <div className="space-y-4">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">🚫 2. PAÍSES A EXCLUIR</label>
-              <textarea
-                value={excludeText}
-                onChange={(e) => setExcludeText(e.target.value)}
-                placeholder="Escribe los países a excluir separados por coma o salto de línea"
-                className="w-full h-64 bg-[#f8fafc] border border-slate-200 rounded-[1.25rem] p-6 font-medium text-sm outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none"
-              />
+              <textarea value={excludeText} onChange={(e) => setExcludeText(e.target.value)} placeholder="Escribe los países a excluir separados por coma o salto de línea" className="w-full h-64 bg-[#f8fafc] border border-slate-200 rounded-[1.25rem] p-6 font-medium text-sm outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 transition-all resize-none" />
+              <div className="space-y-3">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Selección rápida:</span>
+                <div className="flex flex-wrap gap-2">
+                  {EXCLUSION_PRESETS.map((preset, idx) => {
+                    const active = isPresetActive(preset.countries);
+                    return <button key={idx} onClick={() => handleTogglePreset(preset.countries)} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${active ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-rose-400 hover:text-rose-600'}`}>{active && <i className="fas fa-check mr-2 scale-75"></i>}{preset.label}</button>;
+                  })}
+                </div>
+              </div>
             </div>
           </div>
-
           <div className="flex flex-col items-center gap-8 pt-4">
-            <button
-              onClick={handleGenerate}
-              className="bg-[#232a42] text-white font-black px-16 py-5 rounded-[1.25rem] flex items-center justify-center gap-4 hover:bg-slate-800 transition-all text-xs tracking-[0.2em] uppercase shadow-xl hover:-translate-y-1 active:translate-y-0"
-            >
-              <i className="fas fa-bolt text-indigo-400"></i>
-              Generar Códigos
-            </button>
-
-            {error && (
-              <div className="bg-rose-50 text-rose-700 px-6 py-4 rounded-2xl text-xs font-bold border border-rose-100 animate-in slide-in-from-top-2">
-                <i className="fas fa-triangle-exclamation mr-3"></i>{error}
-              </div>
-            )}
-
+            <button onClick={handleGenerate} className="bg-[#232a42] text-white font-black px-16 py-5 rounded-[1.25rem] flex items-center justify-center gap-4 hover:bg-slate-800 transition-all text-xs tracking-[0.2em] uppercase shadow-xl hover:-translate-y-1 active:translate-y-0"><i className="fas fa-bolt text-indigo-400"></i> Generar Códigos</button>
+            {error && <div className="bg-rose-50 text-rose-700 px-6 py-4 rounded-2xl text-xs font-bold border border-rose-100 animate-in slide-in-from-top-2"><i className="fas fa-triangle-exclamation mr-3"></i>{error}</div>}
             {result && (
               <div className="w-full space-y-4 animate-in zoom-in-95">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center block">📦 3. RESULTADO GENERADO</label>
                 <div className="relative group">
-                  <div className="w-full bg-slate-900 text-emerald-400 p-8 rounded-[1.5rem] font-mono text-lg break-all shadow-inner border border-slate-800">
-                    {result}
-                  </div>
-                  <button
-                    onClick={handleCopy}
-                    className={`absolute right-4 top-4 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-md'}`}
-                  >
-                    {copied ? <><i className="fas fa-check mr-2"></i>Copiado</> : <><i className="fas fa-copy mr-2"></i>Copiar</>}
-                  </button>
+                  <div className="w-full bg-slate-900 text-emerald-400 p-8 rounded-[1.5rem] font-mono text-lg break-all shadow-inner border border-slate-800">{result}</div>
+                  <button onClick={handleCopy} className={`absolute right-4 top-4 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-md'}`}>{copied ? <><i className="fas fa-check mr-2"></i>Copiado</> : <><i className="fas fa-copy mr-2"></i>Copiar</>}</button>
                 </div>
               </div>
             )}
@@ -508,15 +436,209 @@ const CountryCodeFormatterView: React.FC = () => {
   );
 };
 
-// --- COMPONENTE: HOME (CON ACCESOS DIRECTOS) ---
+// --- COMPONENTE: LISTADO DE BODEGONES ---
+const BodegonesListView: React.FC = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const CATEGORY_MAP: Record<string, string> = {
+    'WOMAN': 'W',
+    'MAN': 'M',
+    'GIRL': 'G',
+    'BOY': 'B',
+    'TEEN GIRL': 'TG',
+    'TEEN BOY': 'TB',
+    'BABY GIRL': 'BG',
+    'BABY BOY': 'BB',
+    'HOME': 'H',
+    'PLUS SIZE': 'PS'
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target.files?.[0] || null);
+    setError(null);
+    setResult('');
+  };
+
+  const handleGenerate = async () => {
+    if (!file) {
+      setError("Por favor, sube un archivo Excel.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+    setResult('');
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const finalOutput: string[] = [];
+
+      // 1. Recorrer TODAS las hojas del libro
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const aoa: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+        // 2. Recorrer la hoja para encontrar todas las tablas (incluso en paralelo)
+        for (let i = 0; i < aoa.length; i++) {
+          const row = aoa[i];
+          if (!row) continue;
+
+          for (let j = 0; j < row.length; j++) {
+            const cellValue = String(row[j]).trim().toUpperCase();
+            
+            // Si la celda contiene un nombre de categoría válido
+            if (CATEGORY_MAP[cellValue]) {
+              const sigla = CATEGORY_MAP[cellValue];
+              let refeColIdx = -1;
+              let headerFoundAt = -1;
+              
+              // Buscamos la cabecera 'REFE' en las proximidades (hasta 3 filas abajo)
+              // y permitimos un ligero desplazamiento de columnas (+/- 2)
+              for (let k = 1; k <= 3; k++) {
+                if (aoa[i + k]) {
+                  const potentialHeaderRow = aoa[i + k];
+                  for (let colOffset = -2; colOffset <= 2; colOffset++) {
+                    const checkCol = j + colOffset;
+                    if (checkCol >= 0 && potentialHeaderRow[checkCol]) {
+                      const headerVal = String(potentialHeaderRow[checkCol]).trim().toUpperCase();
+                      if (headerVal === 'REFE') {
+                        refeColIdx = checkCol;
+                        headerFoundAt = i + k;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (refeColIdx !== -1) break;
+              }
+
+              if (refeColIdx !== -1) {
+                const refs: string[] = [];
+                // Intentamos extraer exactamente 6 referencias consecutivas debajo del header
+                for (let m = 1; m <= 6; m++) {
+                  const dataRow = aoa[headerFoundAt + m];
+                  if (dataRow) {
+                    const val = String(dataRow[refeColIdx]).trim();
+                    if (val !== '') {
+                      refs.push(val);
+                    }
+                  }
+                }
+
+                if (refs.length === 6) {
+                  finalOutput.push(`${sigla}:${refs.join(',')}`);
+                } else if (refs.length > 0) {
+                  throw new Error(`Error en hoja "${sheetName}": La categoría "${cellValue}" no tiene exactamente 6 referencias (se encontraron ${refs.length}).`);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (finalOutput.length === 0) {
+        throw new Error("No se encontraron categorías válidas con sus 6 referencias en el archivo.");
+      }
+
+      setResult(finalOutput.join('\n'));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (result) {
+      navigator.clipboard.writeText(result);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="animate-in fade-in duration-700 max-w-6xl mx-auto">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
+        <div className="bg-[#232a42] p-12 text-white flex items-start gap-8 relative overflow-hidden">
+          <div className="bg-emerald-400 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg relative z-10">
+            <i className="fas fa-camera"></i>
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-4xl font-bold mb-3 tracking-tight">Listado de Bodegones</h2>
+            <p className="text-slate-400 text-sm max-w-lg leading-relaxed font-medium">
+              Procesa hojas de producto para generar listados de referencias por categoría listos para importación.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-12 space-y-12 bg-white text-center">
+          <div className="max-w-md mx-auto space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Sube el archivo Excel</label>
+            <div 
+              onClick={() => document.getElementById('up-bodegones')?.click()} 
+              className={`group border-2 border-dashed rounded-[2.5rem] p-16 flex flex-col items-center justify-center gap-6 transition-all cursor-pointer hover:bg-slate-50 ${file ? 'bg-emerald-50/30 border-emerald-200' : 'bg-white border-slate-200 hover:border-indigo-400'}`}
+            >
+              <div className={`text-5xl ${file ? 'text-emerald-500' : 'text-slate-200 group-hover:text-indigo-400'} transition-colors`}>
+                <i className="fas fa-file-excel"></i>
+              </div>
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] leading-relaxed">
+                {file ? file.name : 'Seleccionar Archivo .xlsx'}
+              </span>
+              <input type="file" id="up-bodegones" className="hidden" accept=".xlsx,.xls" onChange={handleFileUpload} />
+            </div>
+          </div>
+
+          <button 
+            onClick={handleGenerate} 
+            disabled={isProcessing || !file} 
+            className="bg-[#232a42] text-white font-black px-16 py-6 rounded-2xl flex items-center justify-center gap-4 hover:bg-slate-800 transition-all disabled:opacity-50 text-xs tracking-[0.2em] uppercase shadow-xl mx-auto"
+          >
+            {isProcessing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-magic"></i>}
+            Generar Listado de Bodegones
+          </button>
+
+          {error && (
+            <div className="bg-rose-50 text-rose-700 p-6 rounded-2xl text-xs font-bold border border-rose-100 animate-in fade-in max-w-2xl mx-auto">
+              <i className="fas fa-triangle-exclamation mr-3"></i>{error}
+            </div>
+          )}
+
+          {result && (
+            <div className="w-full space-y-6 animate-in zoom-in-95 max-w-4xl mx-auto">
+              <div className="flex justify-between items-center px-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Resultado Formateado</label>
+                <button 
+                  onClick={handleCopy} 
+                  className={`text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-xl transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
+                  {copied ? '¡Copiado!' : 'Copiar Todo'}
+                </button>
+              </div>
+              <textarea 
+                readOnly 
+                value={result} 
+                className="w-full h-80 bg-slate-900 text-emerald-400 p-10 rounded-[2rem] font-mono text-base break-all shadow-inner border border-slate-800 outline-none resize-none leading-relaxed"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTE: HOME ---
 const HomeView = ({ onNavigate }: { onNavigate: (id: string) => void }) => (
   <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
     <div className="relative bg-[#232a42] rounded-[3rem] p-16 text-white overflow-hidden shadow-2xl">
       <div className="relative z-10 max-w-2xl">
         <h1 className="text-5xl font-black mb-8 leading-tight tracking-tight">MANGO Mejoras <span className="text-indigo-400 text-6xl">.</span></h1>
-        <p className="text-slate-400 text-xl leading-relaxed font-medium">
-          Bienvenido al hub de automatización.
-        </p>
+        <p className="text-slate-400 text-xl leading-relaxed font-medium">Bienvenido al hub de automatización de procesos de marketing.</p>
         <div className="mt-12 flex gap-6">
           <div className="bg-white/5 backdrop-blur-xl px-8 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase tracking-[0.2em] shadow-lg">
             <i className="fas fa-bolt text-indigo-400 mr-3"></i> Eficiencia Operativa
@@ -527,87 +649,36 @@ const HomeView = ({ onNavigate }: { onNavigate: (id: string) => void }) => (
         </div>
       </div>
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-500/10 to-transparent"></div>
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
     </div>
 
-    {/* Sección de Acceso Rápido */}
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Acceso Rápido</h2>
         <p className="text-slate-500 text-sm font-medium uppercase tracking-widest">Herramientas principales</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        <div 
-          onClick={() => onNavigate('traducciones')}
-          className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer hover:border-indigo-100"
-        >
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-indigo-500 group-hover:scale-110 transition-transform">
-            <i className="fas fa-folder-open text-2xl"></i>
-          </div>
+        <div onClick={() => onNavigate('traducciones')} className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-indigo-500 group-hover:scale-110 transition-transform"><i className="fas fa-folder-open text-2xl"></i></div>
           <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Traducciones Outlet</h3>
           <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">Procesamiento inteligente de catálogos y generación de archivos auxiliares.</p>
-          <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">
-            Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i>
-          </div>
+          <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i></div>
         </div>
-
-        <div 
-          onClick={() => onNavigate('countryCodes')}
-          className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer hover:border-indigo-100"
-        >
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-[#232a42] group-hover:scale-110 transition-transform">
-            <i className="fas fa-globe text-2xl"></i>
-          </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Listado de Países</h3>
+        <div onClick={() => onNavigate('countryCodes')} className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-[#232a42] group-hover:scale-110 transition-transform"><i className="fas fa-globe text-2xl"></i></div>
+          <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Formateador Países</h3>
           <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">Extrae y unifica códigos numéricos de países a formato de 3 cifras.</p>
-          <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">
-            Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i>
-          </div>
+          <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i></div>
+        </div>
+        <div onClick={() => onNavigate('bodegones')} className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg bg-emerald-500 group-hover:scale-110 transition-transform"><i className="fas fa-camera text-2xl"></i></div>
+          <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Listado Bodegones</h3>
+          <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">Genera listados de referencias formateados por categoría desde Excel.</p>
+          <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">Ir a herramienta <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i></div>
         </div>
       </div>
     </div>
   </div>
 );
-
-// --- COMPONENTE: LISTA DE HERRAMIENTAS ---
-const AutomationsList = ({ onSelect }: { onSelect: (tab: string) => void }) => {
-  const tools = [
-    { id: 'traducciones', title: 'Traducciones Outlet', desc: 'Unificación de Excels de traducciones y generación automática de archivos auxiliares.', icon: 'fa-language', color: 'bg-indigo-500', active: true },
-    { id: 'countryCodes', title: 'Formateador de Países', desc: 'Herramienta para filtrar y formatear códigos de país a 3 cifras para bases de datos.', icon: 'fa-globe', color: 'bg-[#232a42]', active: true },
-  ];
-
-  return (
-    <div className="space-y-12 animate-in fade-in duration-500">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Herramientas</h2>
-          <p className="text-slate-500 font-medium">Ejecuta las automatizaciones disponibles.</p>
-        </div>
-        <div className="text-[10px] font-black text-slate-400 uppercase bg-white border border-slate-200 px-6 py-3 rounded-full tracking-[0.2em] shadow-sm">
-          {tools.length} Módulo Activo
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {tools.map((tool) => (
-          <div 
-            key={tool.id} 
-            onClick={() => tool.active && onSelect(tool.id)}
-            className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-3 cursor-pointer hover:border-indigo-100"
-          >
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg ${tool.color} group-hover:scale-110 transition-transform`}>
-              <i className={`fas ${tool.icon} text-2xl`}></i>
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">{tool.title}</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-8 font-medium">{tool.desc}</p>
-            <div className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">
-              Ejecutar <i className="fas fa-arrow-right group-hover:translate-x-3 transition-transform"></i>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 // --- APP PRINCIPAL ---
 const App: React.FC = () => {
@@ -616,86 +687,58 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home': return <HomeView onNavigate={setActiveTab} />;
-      case 'automations': return <AutomationsList onSelect={setActiveTab} />;
       case 'traducciones': return <TraduccionesOutletView />;
       case 'countryCodes': return <CountryCodeFormatterView />;
+      case 'bodegones': return <BodegonesListView />;
       default: return <HomeView onNavigate={setActiveTab} />;
     }
   };
 
-  const NavItem = ({ id, icon, label }: { id: string, icon: string, label: string }) => (
+  const NavItem = ({ id, icon, label, sub = false }: { id: string, icon: string, label: string, sub?: boolean }) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-5 px-6 py-5 rounded-2xl text-xs font-black transition-all duration-300 uppercase tracking-widest ${activeTab === id ? 'bg-[#232a42] text-white shadow-xl shadow-slate-200' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+      className={`w-full flex items-center gap-5 rounded-2xl transition-all duration-300 uppercase tracking-widest 
+        ${sub ? 'ml-4 px-4 py-3 text-[10px] font-semibold' : 'px-6 py-5 text-xs font-black'}
+        ${activeTab === id ? 'bg-[#232a42] text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
     >
-      <i className={`fas ${icon} text-lg w-6`}></i>
+      <i className={`fas ${icon} ${sub ? 'text-base w-5' : 'text-lg w-6'}`}></i>
       <span>{label}</span>
     </button>
   );
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
-      <aside className="w-80 bg-white border-r border-slate-200 px-8 py-10 flex flex-col fixed h-full z-20 overflow-y-auto">
+      <aside className="w-80 bg-white border-r border-slate-200 px-8 py-10 flex flex-col fixed h-full z-20 overflow-y-auto shadow-sm">
         <div className="flex items-center gap-5 mb-16 px-2">
-          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white text-2xl font-black shadow-lg">M</div>
+          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white text-2xl font-black">M</div>
           <div>
             <span className="font-black text-xl tracking-tighter block leading-none">MANGO</span>
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em]">MARKETING TECH</span>
           </div>
         </div>
         <nav className="space-y-3 flex-1">
-          <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-6 px-4">AUTOMATIZACIONES</div>
+          <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 px-4">NAVEGACIÓN</div>
           <NavItem id="home" icon="fa-house" label="Home" />
-          <NavItem id="traducciones" icon="fa-folder-open" label="Traducciones Outlet" />
-          <NavItem id="countryCodes" icon="fa-globe" label="Formateador Países" />
-        </nav>
-        <div className="mt-auto">
-          <div className="bg-[#f8fafc] rounded-3xl p-6 border border-slate-100 shadow-sm">
-             <div className="space-y-3">
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Estatus del Sistema</p>
-               <div className="flex items-center gap-3">
-                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                 <span className="text-[11px] font-bold text-slate-600">Todos los servicios activos</span>
-               </div>
-             </div>
+          <div className="pt-2 space-y-1">
+            <NavItem id="traducciones" icon="fa-folder-open" label="Traducciones Outlet" sub />
+            <NavItem id="countryCodes" icon="fa-globe" label="Formateador Países" sub />
+            <NavItem id="bodegones" icon="fa-camera" label="Listado Bodegones" sub />
           </div>
-        </div>
+        </nav>
       </aside>
 
       <main className="flex-1 ml-80 p-16">
         <header className="flex justify-between items-center mb-16">
            <div className="flex items-center gap-4">
-             <div className="bg-black text-white text-[9px] font-black px-2 py-0.5 rounded-md tracking-tighter shadow-sm">V2.5</div>
-             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">MARKETING TECH DASHBOARD</div>
+             {/* Textos eliminados según solicitud */}
            </div>
            <div className="flex items-center gap-8">
-             <div className="flex items-center gap-4 bg-white border border-slate-200 px-5 py-2.5 rounded-2xl shadow-sm">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-800 shadow-sm overflow-hidden"><div className="w-full h-full flex items-center justify-center text-white text-[9px] font-black">JS</div></div>
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-indigo-500 shadow-sm overflow-hidden"><div className="w-full h-full flex items-center justify-center text-white text-[9px] font-black">AO</div></div>
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-600">MARKETING OPS</span>
-             </div>
-             <div className="flex gap-4">
-               <button className="w-11 h-11 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-900 transition-all flex items-center justify-center shadow-sm hover:shadow-md"><i className="fas fa-bell"></i></button>
-               <button className="w-11 h-11 bg-slate-900 rounded-2xl text-white shadow-lg flex items-center justify-center overflow-hidden"><i className="fas fa-user-circle text-2xl"></i></button>
-             </div>
+             <button className="w-11 h-11 bg-slate-900 rounded-2xl text-white shadow-lg flex items-center justify-center overflow-hidden"><i className="fas fa-user-circle text-2xl"></i></button>
            </div>
         </header>
-
         {renderContent()}
-
-        <footer className="mt-24 py-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] gap-8">
-          <div className="flex items-center gap-8">
-            <span className="tracking-tighter">© {new Date().getFullYear()} MANGO MARKETING AUTOMATION</span>
-            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
-            <span>PROYECTO INTERNO</span>
-          </div>
-          <div className="flex gap-10">
-            <a href="#" className="hover:text-indigo-600 transition-all">Documentación</a>
-            <a href="#" className="hover:text-indigo-600 transition-all">Soporte</a>
-            <a href="#" className="hover:text-indigo-600 transition-all">Reportar Bug</a>
-          </div>
+        <footer className="mt-24 py-10 border-t border-slate-200 flex justify-between items-center text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          <span>© {new Date().getFullYear()} MANGO MARKETING AUTOMATION</span>
         </footer>
       </main>
     </div>
