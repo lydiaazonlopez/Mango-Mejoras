@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>MANGO - Autenticación</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -363,12 +361,42 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <script>
-        // Configuración de Supabase
-        const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Variables globales
+        let supabase = null;
+        let bcryptoReady = false;
+
+        // Esperamos a que ambas librerías estén cargadas
+        function initializeAuth() {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (window.supabase && window.bcrypt) {
+                        clearInterval(checkInterval);
+                        
+                        const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
+                        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
+                        
+                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                        bcryptoReady = true;
+                        
+                        console.log('✅ Supabase e Bcryptjs cargados');
+                        resolve();
+                    }
+                }, 100);
+                
+                // Timeout de 5 segundos
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (supabase && bcryptoReady) {
+                        resolve();
+                    } else {
+                        console.error('⚠️ Timeout cargando librerías');
+                    }
+                }, 5000);
+            });
+        }
 
         // Verificar sesión existente
         function checkExistingSession() {
@@ -428,6 +456,10 @@
             btn.innerHTML = '<div class="spinner"></div> Verificando...';
 
             try {
+                if (!supabase) {
+                    throw new Error('Supabase no está inicializado');
+                }
+
                 console.log('🔍 Buscando usuario con email:', email);
                 
                 const { data, error } = await supabase
@@ -455,7 +487,6 @@
 
                 const user = data[0];
                 console.log('👤 Usuario encontrado:', { id: user.id, email: user.email, name: user.name });
-                console.log('🔐 Hash almacenado:', user.password_hash.substring(0, 20) + '...');
 
                 if (!user.password_hash) {
                     console.error('❌ El usuario no tiene password_hash');
@@ -466,7 +497,7 @@
                 }
 
                 console.log('🔄 Comparando contraseñas...');
-                const passwordMatch = await bcrypt.compare(password, user.password_hash);
+                const passwordMatch = await window.bcrypt.compare(password, user.password_hash);
                 console.log('✓ Resultado comparación:', passwordMatch);
 
                 if (!passwordMatch) {
@@ -486,7 +517,8 @@
                 localStorage.setItem('user_session', JSON.stringify(session));
                 window.location.href = 'index.html';
             } catch (err) {
-                showMessage('loginMessage', 'Error de conexión. Intenta nuevamente.', 'error');
+                console.error('Error:', err);
+                showMessage('loginMessage', err.message || 'Error de conexión. Intenta nuevamente.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
             }
@@ -515,7 +547,11 @@
             btn.innerHTML = '<div class="spinner"></div> Creando cuenta...';
 
             try {
-                const passwordHash = await bcrypt.hash(password, 10);
+                if (!supabase) {
+                    throw new Error('Supabase no está inicializado');
+                }
+
+                const passwordHash = await window.bcrypt.hash(password, 10);
 
                 const { data, error } = await supabase
                     .from('users')
@@ -552,14 +588,20 @@
                     window.location.href = 'index.html';
                 }, 1500);
             } catch (err) {
-                showMessage('registerMessage', 'Error de conexión. Intenta nuevamente.', 'error');
+                console.error('Error:', err);
+                showMessage('registerMessage', err.message || 'Error de conexión. Intenta nuevamente.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
             }
         });
 
-        // Ejecutar al cargar
-        checkExistingSession();
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', () => {
+            checkExistingSession();
+            initializeAuth().then(() => {
+                console.log('🚀 Auth sistema listo');
+            });
+        });
     </script>
 </body>
 </html>
