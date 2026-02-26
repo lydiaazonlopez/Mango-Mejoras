@@ -420,7 +420,7 @@
         // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
 
@@ -428,20 +428,47 @@
             btn.innerHTML = '<div class="spinner"></div> Verificando...';
 
             try {
+                console.log('🔍 Buscando usuario con email:', email);
+                
                 const { data, error } = await supabase
                     .from('users')
                     .select('id, email, name, password_hash')
-                    .eq('email', email)
-                    .single();
+                    .ilike('email', email);
 
-                if (error || !data) {
+                console.log('📊 Respuesta:', { data, error });
+
+                if (error) {
+                    console.error('❌ Error Supabase:', error);
+                    showMessage('loginMessage', 'Error de conexión: ' + error.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    console.warn('⚠️ No se encontró usuario con email:', email);
                     showMessage('loginMessage', 'Email o contraseña incorrectos', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
                     return;
                 }
 
-                const passwordMatch = await bcrypt.compare(password, data.password_hash);
+                const user = data[0];
+                console.log('👤 Usuario encontrado:', { id: user.id, email: user.email, name: user.name });
+                console.log('🔐 Hash almacenado:', user.password_hash.substring(0, 20) + '...');
+
+                if (!user.password_hash) {
+                    console.error('❌ El usuario no tiene password_hash');
+                    showMessage('loginMessage', 'Error: contraseña no configurada', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
+                    return;
+                }
+
+                console.log('🔄 Comparando contraseñas...');
+                const passwordMatch = await bcrypt.compare(password, user.password_hash);
+                console.log('✓ Resultado comparación:', passwordMatch);
+
                 if (!passwordMatch) {
                     showMessage('loginMessage', 'Email o contraseña incorrectos', 'error');
                     btn.disabled = false;
@@ -450,11 +477,12 @@
                 }
 
                 const session = {
-                    id: data.id,
-                    email: data.email,
-                    name: data.name,
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
                     expires: Date.now() + 86400000
                 };
+                console.log('✅ Sesión creada:', session);
                 localStorage.setItem('user_session', JSON.stringify(session));
                 window.location.href = 'index.html';
             } catch (err) {
