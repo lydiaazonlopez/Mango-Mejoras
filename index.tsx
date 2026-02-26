@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // Declare XLSX for TypeScript context
@@ -683,6 +683,49 @@ const HomeView = ({ onNavigate }: { onNavigate: (id: string) => void }) => (
 // --- APP PRINCIPAL ---
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [userSession, setUserSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Verificar sesión al cargar
+    const checkSession = () => {
+      const session = localStorage.getItem('user_session');
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.expires && parsed.expires > Date.now()) {
+          setUserSession(parsed);
+          setIsLoading(false);
+        } else {
+          localStorage.removeItem('user_session');
+          window.location.href = 'login.html';
+        }
+      } catch (e) {
+        localStorage.removeItem('user_session');
+        window.location.href = 'login.html';
+      }
+    };
+    checkSession();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_session');
+    window.location.href = 'login.html';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#f8fafc]">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-[#232a42]/20 border-t-[#232a42] rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 font-medium">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -725,6 +768,19 @@ const App: React.FC = () => {
             <NavItem id="bodegones" icon="fa-camera" label="Listado Bodegones" sub />
           </div>
         </nav>
+        
+        <div className="border-t border-slate-200 pt-6 mt-6">
+          <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sesión Activa</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{userSession?.name || userSession?.email}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
+          >
+            <i className="fas fa-sign-out-alt"></i> Cerrar Sesión
+          </button>
+        </div>
       </aside>
 
       <main className="flex-1 ml-80 p-16">
@@ -733,7 +789,7 @@ const App: React.FC = () => {
              {/* Textos eliminados según solicitud */}
            </div>
            <div className="flex items-center gap-8">
-             <button className="w-11 h-11 bg-slate-900 rounded-2xl text-white shadow-lg flex items-center justify-center overflow-hidden"><i className="fas fa-user-circle text-2xl"></i></button>
+             <button onClick={handleLogout} className="w-11 h-11 bg-rose-500 hover:bg-rose-600 rounded-2xl text-white shadow-lg flex items-center justify-center overflow-hidden transition-all" title="Cerrar sesión"><i className="fas fa-sign-out-alt text-lg"></i></button>
            </div>
         </header>
         {renderContent()}
