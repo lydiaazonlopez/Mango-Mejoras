@@ -367,6 +367,8 @@
         let authClient = null;
         const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
+        const RESEND_API_KEY = 're_74Tw8whB_41JqyAGyXS8gzhaEw4DnA6h3';
+        const ADMIN_EMAIL = 'rtorreci@nttdata.com';
 
         function initializeAuth() {
             return new Promise((resolve) => {
@@ -513,7 +515,7 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('registerName').value.trim();
-            const email = document.getElementById('registerEmail').value.trim();
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
             const password = document.getElementById('registerPassword').value;
             const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
             const btn = document.getElementById('registerBtn');
@@ -534,7 +536,7 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div> Creando cuenta...';
+            btn.innerHTML = '<div class="spinner"></div> Procesando...';
 
             try {
                 const bcrypt = window.dcodeIO?.bcrypt || window.bcrypt;
@@ -543,14 +545,16 @@
                     throw new Error('Bcrypt no está disponible');
                 }
                 
+                // 1. Hash de contraseña
                 const passwordHash = await new Promise((resolve) => {
                     bcrypt.hash(password, 10, (err, hash) => {
                         resolve(hash);
                     });
                 });
 
+                // 2. Guardar en pending_registrations
                 const { data, error } = await authClient
-                    .from('users')
+                    .from('pending_registrations')
                     .insert([{
                         name,
                         email,
@@ -559,26 +563,72 @@
                     .select('id')
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    if (error.code === '23505') {
+                        showMessage('registerMessage', 'Este email ya tiene una solicitud pendiente o está registrado', 'error');
+                    } else {
+                        throw error;
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
+                    return;
+                }
 
-                showMessage('registerMessage', '¡Cuenta creada! Redirigiendo...', 'success');
+                // 3. Enviar email al admin
+                await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${RESEND_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: 'noreply@mango-automation.com',
+                        to: ADMIN_EMAIL,
+                        subject: `📝 Nueva solicitud de registro - ${name}`,
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                                <h2 style="color: #232a42;">Nueva Solicitud de Registro</h2>
+                                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                                    <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
+                                    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                                    <p style="margin: 0;"><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                                </div>
+                                <p style="margin-top: 30px;">
+                                    <a href="admin.html" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Ir al Panel Admin</a>
+                                </p>
+                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
+                            </div>
+                        `
+                    })
+                });
+
+                showMessage('registerMessage', '✅ Solicitud enviada. El administrador la revisará pronto.', 'success');
                 
-                const session = {
-                    id: data.id,
-                    email,
-                    name,
-                    expires: Date.now() + 86400000
-                };
-                localStorage.setItem('user_session', JSON.stringify(session));
-                
-                setTimeout(() => window.location.href = 'index.html', 1500);
+                // Limpiar formulario
+                setTimeout(() => {
+                    document.getElementById('registerForm').reset();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
+                }, 2000);
+
             } catch (err) {
                 console.error('Error:', err);
-                showMessage('registerMessage', 'Error: ' + (err?.message || 'No se pudo crear'), 'error');
+                showMessage('registerMessage', 'Error: ' + (err?.message || 'Intenta nuevamente'), 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
             }
         });
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             checkExistingSession();

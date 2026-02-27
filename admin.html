@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>MANGO - Admin Registros</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #232a42 0%, #1a1f2e 50%, #0f4c75 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .admin-header {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-header h1 {
+            color: #232a42;
+            font-size: 24px;
+        }
+        
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #ff5555;
+            transform: translateY(-2px);
+        }
+        
+        .requests-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .request-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .request-info {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 15px;
+        }
+        
+        .request-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .request-details {
+            display: grid;
+            gap: 5px;
+        }
+        
+        .request-details h3 {
+            color: #232a42;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .request-details p {
+            color: #666;
+            font-size: 13px;
+            margin: 0;
+        }
+        
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-approve {
+            background: #51cf66;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background: #40c057;
+            transform: translateY(-2px);
+        }
+        
+        .btn-reject {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background: #ff5555;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .empty-state {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 60px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            color: #232a42;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 14px;
+            animation: slideInMessage 0.3s ease-out;
+            z-index: 1000;
+        }
+        
+        @keyframes slideInMessage {
+            from {
+                opacity: 0;
+                transform: translateX(300px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .message.success {
+            background: #51cf66;
+        }
+        
+        .message.error {
+            background: #ff6b6b;
+        }
+        
+        .auth-input {
+            display: grid;
+            gap: 15px;
+            background: white;
+            border-radius: 1.5rem;
+            padding: 30px;
+            max-width: 300px;
+            margin: 100px auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-input input {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.75rem;
+            font-size: 14px;
+        }
+        
+        .auth-input button {
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="authScreen" class="auth-input">
+        <h2 style="text-align: center; color: #232a42; margin: 0 0 10px 0;">Admin Password</h2>
+        <input type="password" id="adminPassword" placeholder="Password" />
+        <button onclick="checkAdminPassword()" style="margin: 0;">Acceder</button>
+    </div>
+
+    <div id="adminScreen" style="display: none;">
+        <div class="admin-header">
+            <h1>📋 Solicitudes de Registro Pendientes</h1>
+            <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+        </div>
+
+        <div id="loadingState" style="text-align: center; color: white; margin: 50px 0;">
+            <div class="spinner" style="display: inline-block;"></div>
+            <p>Cargando solicitudes...</p>
+        </div>
+
+        <div id="requestsContainer" class="requests-list" style="display: none;"></div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <h3>Sin solicitudes pendientes</h3>
+            <p>No hay nuevas solicitudes de registro</p>
+        </div>
+    </div>
+
+    <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+    <script>
+        const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
+        const RESEND_API_KEY = 're_74Tw8whB_41JqyAGyXS8gzhaEw4DnA6h3';
+        const ADMIN_PASSWORD = 'Admin@2024'; // Cambiar esto en producción
+        let supabase = null;
+
+        function initSupabase() {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (window.supabase && typeof window.supabase.createClient === 'function') {
+                        clearInterval(checkInterval);
+                        try {
+                            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                            console.log('✅ Supabase inicializado');
+                            resolve(true);
+                        } catch (error) {
+                            console.error('❌ Error:', error);
+                            resolve(false);
+                        }
+                    }
+                }, 200);
+                
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    resolve(!!supabase);
+                }, 5000);
+            });
+        }
+
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('adminScreen').style.display = 'block';
+                loadRequests();
+            } else {
+                showMessage('Contraseña incorrecta', 'error');
+            }
+        }
+
+        async function loadRequests() {
+            try {
+                const { data, error } = await supabase
+                    .from('pending_registrations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (!data || data.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    return;
+                }
+
+                renderRequests(data);
+            } catch (err) {
+                console.error('Error:', err);
+                showMessage('Error al cargar solicitudes', 'error');
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        function renderRequests(requests) {
+            const container = document.getElementById('requestsContainer');
+            container.innerHTML = '';
+            
+            requests.forEach(req => {
+                const avatar = req.name.charAt(0).toUpperCase();
+                const createdDate = new Date(req.created_at).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const card = document.createElement('div');
+                card.className = 'request-card';
+                card.innerHTML = `
+                    <div class="request-info">
+                        <div class="request-avatar">${avatar}</div>
+                        <div class="request-details">
+                            <h3>${escapeHtml(req.name)}</h3>
+                            <p>${escapeHtml(req.email)}</p>
+                            <p style="font-size: 12px; color: #999;">Solicitud: ${createdDate}</p>
+                        </div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="btn btn-approve" onclick="approveRequest('${req.id}', '${escapeHtml(req.email)}', '${escapeHtml(req.name)}', '${escapeHtml(req.password_hash)}')" id="approve-${req.id}">
+                            <i class="fas fa-check"></i> Aprobar
+                        </button>
+                        <button class="btn btn-reject" onclick="rejectRequest('${req.id}', '${escapeHtml(req.email)}')" id="reject-${req.id}">
+                            <i class="fas fa-times"></i> Rechazar
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            container.style.display = 'grid';
+        }
+
+        async function approveRequest(id, email, name, passwordHash) {
+            const btnApprove = document.getElementById(`approve-${id}`);
+            const btnReject = document.getElementById(`reject-${id}`);
+            btnApprove.disabled = true;
+            btnReject.disabled = true;
+            btnApprove.innerHTML = '<div class="spinner"></div> Aprobando...';
+
+            try {
+                // 1. Crear usuario en tabla users
+                const { error: insertError } = await supabase
+                    .from('users')
+                    .insert([{
+                        email,
+                        name,
+                        password_hash: passwordHash
+                    }]);
+
+                if (insertError) throw insertError;
+
+                // 2. Eliminar de pending_registrations
+                const { error: deleteError } = await supabase
+                    .from('pending_registrations')
+                    .delete()
+                    .eq('id', id);
+
+                if (deleteError) throw deleteError;
+
+                // 3. Enviar email de bienvenida con Resend
+                await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${RESEND_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: 'noreply@mango-automation.com',
+                        to: email,
+                        subject: '✅ Tu registro ha sido aprobado - MANGO',
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                                <h2 style="color: #232a42;">¡Bienvenido a MANGO! 🎉</h2>
+                                <p>Hola ${escapeHtml(name)},</p>
+                                <p>Tu solicitud de registro ha sido <strong>aprobada</strong>. Ya puedes acceder a MANGO Marketing Automation.</p>
+                                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                                    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                                    <p style="margin: 0;">Tu contraseña es la que registraste.</p>
+                                </div>
+                                <p><a href="https://mango-app.com/index.html" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Acceder a MANGO</a></p>
+                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
+                            </div>
+                        `
+                    })
+                });
+
+                showMessage(`✅ ${name} aprobado y notificado`, 'success');
+                
+                // Remover card
+                document.querySelector(`#approve-${id}`).closest('.request-card').style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    document.querySelector(`#approve-${id}`).closest('.request-card').remove();
+                    checkIfEmpty();
+                }, 300);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showMessage('Error al aprobar', 'error');
+                btnApprove.disabled = false;
+                btnReject.disabled = false;
+                btnApprove.innerHTML = '<i class="fas fa-check"></i> Aprobar';
+            }
+        }
+
+        async function rejectRequest(id, email) {
+            if (!confirm(`¿Rechazar solicitud de ${email}?`)) return;
+
+            const btnReject = document.getElementById(`reject-${id}`);
+            const btnApprove = document.getElementById(`approve-${id}`);
+            btnReject.disabled = true;
+            btnApprove.disabled = true;
+            btnReject.innerHTML = '<div class="spinner"></div> Rechazando...';
+
+            try {
+                // 1. Eliminar de pending_registrations
+                const { error: deleteError } = await supabase
+                    .from('pending_registrations')
+                    .delete()
+                    .eq('id', id);
+
+                if (deleteError) throw deleteError;
+
+                // 2. Enviar email de rechazo
+                await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${RESEND_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: 'noreply@mango-automation.com',
+                        to: email,
+                        subject: '❌ Tu solicitud de registro ha sido rechazada',
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                                <h2 style="color: #232a42;">Solicitud de Registro Rechazada</h2>
+                                <p>Tu solicitud de registro en MANGO Marketing Automation ha sido rechazada.</p>
+                                <p>Si crees que esto es un error, por favor contacta con el administrador.</p>
+                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
+                            </div>
+                        `
+                    })
+                });
+
+                showMessage(`❌ Solicitud de ${email} rechazada`, 'success');
+                
+                document.querySelector(`#reject-${id}`).closest('.request-card').style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    document.querySelector(`#reject-${id}`).closest('.request-card').remove();
+                    checkIfEmpty();
+                }, 300);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showMessage('Error al rechazar', 'error');
+                btnReject.disabled = false;
+                btnApprove.disabled = false;
+                btnReject.innerHTML = '<i class="fas fa-times"></i> Rechazar';
+            }
+        }
+
+        function checkIfEmpty() {
+            const requests = document.querySelectorAll('.request-card');
+            if (requests.length === 0) {
+                document.getElementById('requestsContainer').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+
+        function showMessage(message, type) {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = message;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_logged_in');
+            location.reload();
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Inicializar
+        (async () => {
+            await initSupabase();
+            if (!supabase) {
+                showMessage('Error al conectar con Supabase', 'error');
+            }
+        })();
+        </script>
+    </style>
+</body>
+</html>

@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
           input: {
             main: path.resolve(__dirname, 'index.html'),
             login: path.resolve(__dirname, 'login.html'),
+            admin: path.resolve(__dirname, 'admin.html'),
           }
         }
       }
