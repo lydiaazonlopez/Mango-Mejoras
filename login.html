@@ -361,35 +361,46 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/bcryptjs@2.4.3"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+    <script async src="https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <script>
         let authClient = null;
+        const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
 
         function initializeAuth() {
             return new Promise((resolve) => {
+                let attempts = 0;
                 const checkInterval = setInterval(() => {
-                    if (window.supabase && window.dcodeIO && window.dcodeIO.bcrypt) {
+                    attempts++;
+                    console.log(`🔍 Intento ${attempts}: supabase=${!!window.supabase}, bcrypt=${!!(window.dcodeIO?.bcrypt || window.bcrypt)}`);
+                    
+                    const hasSupabase = window.supabase && typeof window.supabase.createClient === 'function';
+                    const hasBcrypt = window.dcodeIO?.bcrypt || window.bcrypt;
+                    
+                    if (hasSupabase && hasBcrypt) {
                         clearInterval(checkInterval);
-                        
-                        const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
-                        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
-                        
                         try {
                             authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                            console.log('✅ Auth inicializado');
-                            resolve();
+                            console.log('✅ Supabase y Bcrypt cargados correctamente');
+                            resolve(true);
                         } catch (error) {
-                            console.error('❌ Error:', error);
-                            resolve();
+                            console.error('❌ Error inicializando:', error);
+                            resolve(false);
                         }
                     }
-                }, 200);
+                }, 300);
                 
                 setTimeout(() => {
                     clearInterval(checkInterval);
-                    resolve();
-                }, 5000);
+                    if (!authClient) {
+                        console.error('⚠️ Timeout: Librerías no cargadas');
+                        console.log('window.supabase:', !!window.supabase);
+                        console.log('window.dcodeIO:', !!window.dcodeIO);
+                        console.log('window.bcrypt:', !!window.bcrypt);
+                    }
+                    resolve(!!authClient);
+                }, 10000);
             });
         }
 
@@ -441,7 +452,7 @@
             const btn = document.getElementById('loginBtn');
 
             if (!authClient) {
-                showMessage('loginMessage', 'Sistema no inicializado. Recarga la página.', 'error');
+                showMessage('loginMessage', '⚠️ Sistema cargando... Intenta nuevamente en 2 segundos', 'error');
                 return;
             }
 
@@ -464,7 +475,11 @@
                 }
 
                 const user = data[0];
-                const bcrypt = window.dcodeIO.bcrypt;
+                const bcrypt = window.dcodeIO?.bcrypt || window.bcrypt;
+                
+                if (!bcrypt) {
+                    throw new Error('Bcrypt no está disponible');
+                }
                 
                 const passwordMatch = await new Promise((resolve) => {
                     bcrypt.compare(password, user.password_hash, (err, isMatch) => {
@@ -514,7 +529,7 @@
             }
 
             if (!authClient) {
-                showMessage('registerMessage', 'Sistema no inicializado. Recarga la página.', 'error');
+                showMessage('registerMessage', '⚠️ Sistema cargando... Intenta nuevamente en 2 segundos', 'error');
                 return;
             }
 
@@ -522,7 +537,12 @@
             btn.innerHTML = '<div class="spinner"></div> Creando cuenta...';
 
             try {
-                const bcrypt = window.dcodeIO.bcrypt;
+                const bcrypt = window.dcodeIO?.bcrypt || window.bcrypt;
+                
+                if (!bcrypt) {
+                    throw new Error('Bcrypt no está disponible');
+                }
+                
                 const passwordHash = await new Promise((resolve) => {
                     bcrypt.hash(password, 10, (err, hash) => {
                         resolve(hash);
