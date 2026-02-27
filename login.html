@@ -362,43 +362,37 @@
     </div>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+    <script src="https://unpkg.com/bcryptjs@2.4.3"></script>
     <script>
-        // Variables globales
-        let supabase = null;
-        let bcryptoReady = false;
+        let authClient = null;
 
-        // Esperamos a que ambas librerías estén cargadas
         function initializeAuth() {
             return new Promise((resolve) => {
                 const checkInterval = setInterval(() => {
-                    if (window.supabase && window.bcrypt) {
+                    if (window.supabase && window.dcodeIO && window.dcodeIO.bcrypt) {
                         clearInterval(checkInterval);
                         
                         const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
                         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
                         
-                        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                        bcryptoReady = true;
-                        
-                        console.log('✅ Supabase e Bcryptjs cargados');
-                        resolve();
+                        try {
+                            authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                            console.log('✅ Auth inicializado');
+                            resolve();
+                        } catch (error) {
+                            console.error('❌ Error:', error);
+                            resolve();
+                        }
                     }
-                }, 100);
+                }, 200);
                 
-                // Timeout de 5 segundos
                 setTimeout(() => {
                     clearInterval(checkInterval);
-                    if (supabase && bcryptoReady) {
-                        resolve();
-                    } else {
-                        console.error('⚠️ Timeout cargando librerías');
-                    }
+                    resolve();
                 }, 5000);
             });
         }
 
-        // Verificar sesión existente
         function checkExistingSession() {
             const session = localStorage.getItem('user_session');
             if (session) {
@@ -414,7 +408,6 @@
             }
         }
 
-        // Toggle entre tabs
         document.querySelectorAll('.auth-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
@@ -426,59 +419,44 @@
                 });
                 document.getElementById(tabName).classList.add('active');
                 tab.classList.add('active');
-                
-                // Limpiar mensajes
                 document.getElementById(tabName === 'login' ? 'loginMessage' : 'registerMessage').classList.remove('show');
             });
         });
 
-        // Toggle visibilidad contraseña
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        // Mostrar mensaje
         function showMessage(elementId, message, type) {
             const el = document.getElementById(elementId);
             el.textContent = message;
             el.className = `auth-message show ${type}`;
         }
 
-        // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
 
+            if (!authClient) {
+                showMessage('loginMessage', 'Sistema no inicializado. Recarga la página.', 'error');
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner"></div> Verificando...';
 
             try {
-                if (!supabase) {
-                    throw new Error('Supabase no está inicializado');
-                }
-
-                console.log('🔍 Buscando usuario con email:', email);
-                
-                const { data, error } = await supabase
+                const { data, error } = await authClient
                     .from('users')
                     .select('id, email, name, password_hash')
                     .ilike('email', email);
 
-                console.log('📊 Respuesta:', { data, error });
-
-                if (error) {
-                    console.error('❌ Error Supabase:', error);
-                    showMessage('loginMessage', 'Error de conexión: ' + error.message, 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
-                    return;
-                }
+                if (error) throw error;
 
                 if (!data || data.length === 0) {
-                    console.warn('⚠️ No se encontró usuario con email:', email);
                     showMessage('loginMessage', 'Email o contraseña incorrectos', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
@@ -486,19 +464,13 @@
                 }
 
                 const user = data[0];
-                console.log('👤 Usuario encontrado:', { id: user.id, email: user.email, name: user.name });
-
-                if (!user.password_hash) {
-                    console.error('❌ El usuario no tiene password_hash');
-                    showMessage('loginMessage', 'Error: contraseña no configurada', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
-                    return;
-                }
-
-                console.log('🔄 Comparando contraseñas...');
-                const passwordMatch = await window.bcrypt.compare(password, user.password_hash);
-                console.log('✓ Resultado comparación:', passwordMatch);
+                const bcrypt = window.dcodeIO.bcrypt;
+                
+                const passwordMatch = await new Promise((resolve) => {
+                    bcrypt.compare(password, user.password_hash, (err, isMatch) => {
+                        resolve(isMatch || false);
+                    });
+                });
 
                 if (!passwordMatch) {
                     showMessage('loginMessage', 'Email o contraseña incorrectos', 'error');
@@ -513,18 +485,16 @@
                     name: user.name,
                     expires: Date.now() + 86400000
                 };
-                console.log('✅ Sesión creada:', session);
                 localStorage.setItem('user_session', JSON.stringify(session));
                 window.location.href = 'index.html';
             } catch (err) {
                 console.error('Error:', err);
-                showMessage('loginMessage', err.message || 'Error de conexión. Intenta nuevamente.', 'error');
+                showMessage('loginMessage', 'Error: ' + (err?.message || 'Conexión fallida'), 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-arrow-right"></i> Ingresar';
             }
         });
 
-        // Registro
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('registerName').value.trim();
@@ -543,17 +513,23 @@
                 return;
             }
 
+            if (!authClient) {
+                showMessage('registerMessage', 'Sistema no inicializado. Recarga la página.', 'error');
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner"></div> Creando cuenta...';
 
             try {
-                if (!supabase) {
-                    throw new Error('Supabase no está inicializado');
-                }
+                const bcrypt = window.dcodeIO.bcrypt;
+                const passwordHash = await new Promise((resolve) => {
+                    bcrypt.hash(password, 10, (err, hash) => {
+                        resolve(hash);
+                    });
+                });
 
-                const passwordHash = await window.bcrypt.hash(password, 10);
-
-                const { data, error } = await supabase
+                const { data, error } = await authClient
                     .from('users')
                     .insert([{
                         name,
@@ -563,18 +539,9 @@
                     .select('id')
                     .single();
 
-                if (error) {
-                    if (error.code === '23505') {
-                        showMessage('registerMessage', 'Este email ya está registrado', 'error');
-                    } else {
-                        showMessage('registerMessage', 'Error al crear la cuenta. Intenta nuevamente.', 'error');
-                    }
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
-                    return;
-                }
+                if (error) throw error;
 
-                showMessage('registerMessage', '¡Cuenta creada exitosamente! Redirigiendo...', 'success');
+                showMessage('registerMessage', '¡Cuenta creada! Redirigiendo...', 'success');
                 
                 const session = {
                     id: data.id,
@@ -584,23 +551,18 @@
                 };
                 localStorage.setItem('user_session', JSON.stringify(session));
                 
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                setTimeout(() => window.location.href = 'index.html', 1500);
             } catch (err) {
                 console.error('Error:', err);
-                showMessage('registerMessage', err.message || 'Error de conexión. Intenta nuevamente.', 'error');
+                showMessage('registerMessage', 'Error: ' + (err?.message || 'No se pudo crear'), 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check"></i> Crear Cuenta';
             }
         });
 
-        // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', () => {
             checkExistingSession();
-            initializeAuth().then(() => {
-                console.log('🚀 Auth sistema listo');
-            });
+            initializeAuth();
         });
     </script>
 </body>
