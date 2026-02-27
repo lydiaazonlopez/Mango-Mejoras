@@ -367,8 +367,11 @@
         let authClient = null;
         const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
-        const RESEND_API_KEY = 're_74Tw8whB_41JqyAGyXS8gzhaEw4DnA6h3';
-        const ADMIN_EMAIL = 'rtorreci@nttdata.com';
+        
+        // API URL: localhost:3000 en dev (Vercel CLI), dominio en producción
+        const API_URL = window.location.hostname === 'localhost' && window.location.port === '5173'
+            ? 'http://localhost:3000'
+            : '';
 
         function initializeAuth() {
             return new Promise((resolve) => {
@@ -574,33 +577,18 @@
                     return;
                 }
 
-                // 3. Enviar email al admin
-                await fetch('https://api.resend.com/emails', {
+                // 3. Enviar email al admin (AHORA EN EL BACKEND)
+                const emailResponse = await fetch(`${API_URL}/api/auth/send-registration-email`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${RESEND_API_KEY}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        from: 'noreply@mango-automation.com',
-                        to: ADMIN_EMAIL,
-                        subject: `📝 Nueva solicitud de registro - ${name}`,
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                                <h2 style="color: #232a42;">Nueva Solicitud de Registro</h2>
-                                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                                    <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
-                                    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-                                    <p style="margin: 0;"><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
-                                </div>
-                                <p style="margin-top: 30px;">
-                                    <a href="admin.html" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Ir al Panel Admin</a>
-                                </p>
-                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
-                            </div>
-                        `
-                    })
+                    body: JSON.stringify({ name, email })
                 });
+
+                if (!emailResponse.ok) {
+                    console.warn('Advertencia: Email no enviado, pero solicitud guardada');
+                }
 
                 showMessage('registerMessage', '✅ Solicitud enviada. El administrador la revisará pronto.', 'success');
                 

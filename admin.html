@@ -296,8 +296,11 @@
     <script>
         const SUPABASE_URL = 'https://cgybesgscexysgehxafj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneWJlc2dzY2V4eXNnZWh4YWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTU2ODksImV4cCI6MjA4NzY5MTY4OX0.H9L2P8c23_xLhbioNDY9rbB_SgeNSlwEM8l33ikrQdo';
-        const RESEND_API_KEY = 're_74Tw8whB_41JqyAGyXS8gzhaEw4DnA6h3';
-        const ADMIN_PASSWORD = 'Admin@2024'; // Cambiar esto en producción
+        
+        // API URL: localhost:3000 en dev (Vercel CLI), dominio en producción
+        const API_URL = window.location.hostname === 'localhost' && window.location.port === '5173'
+            ? 'http://localhost:3000'
+            : '';
         let supabase = null;
 
         function initSupabase() {
@@ -325,13 +328,28 @@
 
         function checkAdminPassword() {
             const password = document.getElementById('adminPassword').value;
-            if (password === ADMIN_PASSWORD) {
-                document.getElementById('authScreen').style.display = 'none';
-                document.getElementById('adminScreen').style.display = 'block';
-                loadRequests();
-            } else {
-                showMessage('Contraseña incorrecta', 'error');
-            }
+            
+            // Llamar al backend para verificar
+            fetch(`${API_URL}/api/auth/verify-admin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.valid) {
+                    adminPassword = password; // Guardar para usar después
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('adminScreen').style.display = 'block';
+                    loadRequests();
+                } else {
+                    showMessage('Contraseña incorrecta', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                showMessage('Error al verificar contraseña', 'error');
+            });
         }
 
         async function loadRequests() {
@@ -406,51 +424,23 @@
             btnApprove.innerHTML = '<div class="spinner"></div> Aprobando...';
 
             try {
-                // 1. Crear usuario en tabla users
-                const { error: insertError } = await supabase
-                    .from('users')
-                    .insert([{
+                // Llamar al backend para crear usuario + enviar email
+                const response = await fetch(`${API_URL}/api/auth/approve-registration`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        registrationId: id,
                         email,
                         name,
-                        password_hash: passwordHash
-                    }]);
-
-                if (insertError) throw insertError;
-
-                // 2. Eliminar de pending_registrations
-                const { error: deleteError } = await supabase
-                    .from('pending_registrations')
-                    .delete()
-                    .eq('id', id);
-
-                if (deleteError) throw deleteError;
-
-                // 3. Enviar email de bienvenida con Resend
-                await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${RESEND_API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        from: 'noreply@mango-automation.com',
-                        to: email,
-                        subject: '✅ Tu registro ha sido aprobado - MANGO',
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                                <h2 style="color: #232a42;">¡Bienvenido a MANGO! 🎉</h2>
-                                <p>Hola ${escapeHtml(name)},</p>
-                                <p>Tu solicitud de registro ha sido <strong>aprobada</strong>. Ya puedes acceder a MANGO Marketing Automation.</p>
-                                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                                    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-                                    <p style="margin: 0;">Tu contraseña es la que registraste.</p>
-                                </div>
-                                <p><a href="https://mango-app.com/index.html" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Acceder a MANGO</a></p>
-                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
-                            </div>
-                        `
+                        passwordHash,
+                        adminPassword
                     })
                 });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error al aprobar');
+                }
 
                 showMessage(`✅ ${name} aprobado y notificado`, 'success');
                 
@@ -463,7 +453,7 @@
 
             } catch (err) {
                 console.error('Error:', err);
-                showMessage('Error al aprobar', 'error');
+                showMessage('Error: ' + err.message, 'error');
                 btnApprove.disabled = false;
                 btnReject.disabled = false;
                 btnApprove.innerHTML = '<i class="fas fa-check"></i> Aprobar';
@@ -480,35 +470,21 @@
             btnReject.innerHTML = '<div class="spinner"></div> Rechazando...';
 
             try {
-                // 1. Eliminar de pending_registrations
-                const { error: deleteError } = await supabase
-                    .from('pending_registrations')
-                    .delete()
-                    .eq('id', id);
-
-                if (deleteError) throw deleteError;
-
-                // 2. Enviar email de rechazo
-                await fetch('https://api.resend.com/emails', {
+                // Llamar al backend
+                const response = await fetch(`${API_URL}/api/auth/reject-registration`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${RESEND_API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        from: 'noreply@mango-automation.com',
-                        to: email,
-                        subject: '❌ Tu solicitud de registro ha sido rechazada',
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                                <h2 style="color: #232a42;">Solicitud de Registro Rechazada</h2>
-                                <p>Tu solicitud de registro en MANGO Marketing Automation ha sido rechazada.</p>
-                                <p>Si crees que esto es un error, por favor contacta con el administrador.</p>
-                                <p style="color: #999; font-size: 12px; margin-top: 30px;">© 2024 MANGO. Todos los derechos reservados.</p>
-                            </div>
-                        `
+                        registrationId: id,
+                        email,
+                        adminPassword
                     })
                 });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error al rechazar');
+                }
 
                 showMessage(`❌ Solicitud de ${email} rechazada`, 'success');
                 
@@ -520,7 +496,7 @@
 
             } catch (err) {
                 console.error('Error:', err);
-                showMessage('Error al rechazar', 'error');
+                showMessage('Error: ' + err.message, 'error');
                 btnReject.disabled = false;
                 btnApprove.disabled = false;
                 btnReject.innerHTML = '<i class="fas fa-times"></i> Rechazar';
